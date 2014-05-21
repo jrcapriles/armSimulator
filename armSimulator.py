@@ -52,7 +52,10 @@ class armSimulator( object ):
         self.IC = self.ICList[case]
         
     def setMaxF(self, F):
-        self.maxF = F
+        if F is None:
+            self.maxF = [10 for i in range(self.links)]
+        else:
+            self.maxF = F
         
     def getWidth(self):
         return self.width
@@ -70,7 +73,10 @@ class armSimulator( object ):
         return -y -(2*self.a/sqrt(pow(self.a,2)-1))*arctan(sqrt((self.a-1)/(self.a+1))*tan(y/2)) 
 
     def runSimulation(self, case):
+
+        self.createIC() 
         self.createArm(case)
+        
         # Simulation loop.
         self.clk = pygame.time.Clock()
 
