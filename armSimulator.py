@@ -2,7 +2,7 @@
 """
 Created on Fri May  2 01:17:09 2014
 
-@author: Jose Capriles 
+@author: jrcapriles
 """
 
 import pygame

@@ -2,7 +2,7 @@
 """
 Created on Tue May 20 00:33:16 2014
 
-@author: joser
+@author: jrcapriles
 """
 
 from armSimulator import *
