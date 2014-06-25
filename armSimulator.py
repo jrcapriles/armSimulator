@@ -54,6 +54,9 @@ class armSimulator( object ):
     def getTarget(self, i):
         return self.thetad[i]
         
+    def getTargetRange(self, i,j):
+        return self.thetad[i:j]
+        
     def setIC(self, case):
         self.IC = self.ICList[case]
         
@@ -142,8 +145,8 @@ class armSimulator( object ):
                     xd.append(-self.L[0,0]*sin(-self.getTarget(0)))
                     yd.append(-self.L[0,0]*cos(-self.getTarget(0)))
                 else:
-                    xd.append(xd[i-1]+self.L[0,i]*sin(-sum(self.thetad[0:i])+self.getTarget(i)))
-                    yd.append(yd[i-1]-self.L[0,i]*cos(-sum(self.thetad[0:i])+self.getTarget(i)))
+                    xd.append(xd[i-1]+self.L[0,i]*sin(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
+                    yd.append(yd[i-1]-self.L[0,i]*cos(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
                 
                 T.append(-errTheta[i])
 
