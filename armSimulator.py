@@ -5,9 +5,10 @@ Created on Fri May  2 01:17:09 2014
 @author: jrcapriles
 """
 
-import pygame
+import pygame, Buttons
 from pygame.locals import *
 import ode
+from math import atan2
 from numpy import *
 from Point import *
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ class armSimulator( object ):
         self.g= -9.81
         self.maxF = 20*ones((1,links))
         self.thetad = zeros((1,links)) 
+        self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
 
     def createIC(self):
         rest = [] 
@@ -89,6 +91,7 @@ class armSimulator( object ):
 
     def runSimulation(self, case, targets):
 
+                
         self.createIC() 
         self.createArm(case)
         self.setTarget(targets)
@@ -103,6 +106,11 @@ class armSimulator( object ):
                     self.loopFlag=False
                 if e.type==KEYDOWN:
                     self.loopFlag=False
+                elif e.type == MOUSEBUTTONDOWN:
+                    if self.goal_button.pressed(pygame.mouse.get_pos()):
+                        print "New Goals: please click the new goal over the red circle"
+                        self.setNewGoal()
+
 
             # Clear the screen
             self.srf.fill((255,255,255))
@@ -167,7 +175,9 @@ class armSimulator( object ):
 
 
             self.drawBackLines()
-    
+            
+            self.goal_button.update() #create_button(self.srf, (200,0,0), 10, 10, 50, 25, 0, "Goal", (255,255,255))
+        
             pygame.display.flip()
 
             # Next simulation step
@@ -222,5 +232,45 @@ class armSimulator( object ):
             self.j[i].setParam(ode.ParamHiStop,5.0) 
             self.j[i].MaxForce = 10
         
+        
+    def setNewGoal(self):
+        self.go = (0,0)
+        self.newGoal = zeros(self.links)
+        i=0
+        self.end = self.links
+        
+        while self.loopFlag:
 
-            
+            if i == 0:            
+                pygame.draw.circle(self.srf, (255,0,0), (self.width/2,self.lenght/2), 130, 1) 
+            else:
+                #Trik to remove the first circle. Find a better way to do this
+                pygame.draw.circle(self.srf, (255,255,255), (self.width/2,self.lenght/2), 130, 1) 
+                pygame.draw.circle(self.srf, (255,0,0), (self.width/2+xd,self.lenght/2+yd), 130, 1)
+                
+            pygame.display.flip()
+            events = pygame.event.get()
+            for e in events:
+                if e.type==QUIT:
+                    self.loopFlag=False
+                if e.type==KEYDOWN:
+                    self.loopFlag=False
+                if e.type == MOUSEBUTTONDOWN:
+                    self.go = pygame.mouse.get_pos()
+                    
+                    xd = self.go[0] - self.width/2                    
+                    yd = self.go[1] - self.lenght/2  
+                    print xd, yd
+                    print atan2(xd,yd)
+                    if i ==0:
+                        self.newGoal[i] = atan2(xd,yd)
+                    else:
+                        self.newGoal[i] =  atan2(xd,yd) - self.newGoal[i-1]
+
+                    i +=1
+                    self.end -=1
+                    
+            if self.end == 0:
+                self.setTarget(self.newGoal)
+                break
+
