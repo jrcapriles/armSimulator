@@ -23,26 +23,26 @@ class Point( object ):
 
     def getPointZ(self):
         return self.z
-
-
-class PendulumState( object ):
-    def __init__( self, x, y):
-        self.x, self.y = x, y
-        
-    def getState(self):
-        return ((self.x, self.y))
-        
-    def getStateX(self):
-        return self.x
-        
-    def getStateY(self):
-        return self.y
-        
-    def __add__(self, other):
-        return PendulumState(self.x + other.x,self.y + other.y)
-        
-    def __sub__(self, other):
-        return PendulumState(self.x - other.x,self.y - other.y)
-    
-    def __abs__(self):
-        return PendulumState(abs(self.x),abs(self.y))
+#
+#
+#class PendulumState( object ):
+#    def __init__( self, x, y):
+#        self.x, self.y = x, y
+#        
+#    def getState(self):
+#        return ((self.x, self.y))
+#        
+#    def getStateX(self):
+#        return self.x
+#        
+#    def getStateY(self):
+#        return self.y
+#        
+#    def __add__(self, other):
+#        return PendulumState(self.x + other.x,self.y + other.y)
+#        
+#    def __sub__(self, other):
+#        return PendulumState(self.x - other.x,self.y - other.y)
+#    
+#    def __abs__(self):
+#        return PendulumState(abs(self.x),abs(self.y))

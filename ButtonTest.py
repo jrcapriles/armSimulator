@@ -1,5 +1,9 @@
-# Jose Capriles
-# 07/26/2014
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jul 26 23:01:44 2014
+
+@author: Jose Capriles
+"""
 
 import pygame, Buttons
 from pygame.locals import *
@@ -7,7 +11,7 @@ from pygame.locals import *
 #Initialize pygame
 pygame.init()
 
-class Button_Example:
+class Button_Test:
     def __init__(self):
         self.loopFlag = True
         self.main()
@@ -43,4 +47,4 @@ class Button_Example:
                         print "Test Passed!"
 
 if __name__ == '__main__':
-    obj = Button_Example()
+    obj = Button_Test()

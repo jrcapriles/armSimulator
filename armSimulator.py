@@ -234,43 +234,49 @@ class armSimulator( object ):
         
         
     def setNewGoal(self):
+        
         self.go = (0,0)
         self.newGoal = zeros(self.links)
-        i=0
-        self.end = self.links
+        i = 0
+    
+        self.red_circle = (self.width/2,self.lenght/2)
+        self.white_circle = (self.width/2,self.lenght/2)
+        self.newGoalFlag =True
         
-        while self.loopFlag:
-
-            if i == 0:            
-                pygame.draw.circle(self.srf, (255,0,0), (self.width/2,self.lenght/2), 130, 1) 
-            else:
-                #Trik to remove the first circle. Find a better way to do this
-                pygame.draw.circle(self.srf, (255,255,255), (self.width/2,self.lenght/2), 130, 1) 
-                pygame.draw.circle(self.srf, (255,0,0), (self.width/2+xd,self.lenght/2+yd), 130, 1)
+        while self.newGoalFlag:
+            # Draw the current circle in red and erase previous
+            pygame.draw.circle(self.srf, (255,255,255), (self.white_circle[0],self.white_circle[1]), 130, 1)             
+            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 130, 1) 
                 
             pygame.display.flip()
             events = pygame.event.get()
+            
             for e in events:
                 if e.type==QUIT:
                     self.loopFlag=False
+                    self.newGoalFlag = False
                 if e.type==KEYDOWN:
                     self.loopFlag=False
+                    self.newGoalFlag = False
                 if e.type == MOUSEBUTTONDOWN:
                     self.go = pygame.mouse.get_pos()
+    
+                    self.white_circle = self.red_circle
+                    self.red_circle = self.go
                     
-                    xd = self.go[0] - self.width/2                    
-                    yd = self.go[1] - self.lenght/2  
-                    print xd, yd
-                    print atan2(xd,yd)
-                    if i ==0:
+                    xd = self.red_circle[0] - self.white_circle[0]                    
+                    yd = self.red_circle[1] - self.white_circle[1]
+                    
+                    if i==0:
                         self.newGoal[i] = atan2(xd,yd)
                     else:
-                        self.newGoal[i] =  atan2(xd,yd) - self.newGoal[i-1]
-
-                    i +=1
-                    self.end -=1
+                        self.newGoal[i] = sum(self.newGoal) - atan2(xd,yd)
+                        
+                    print self.newGoal[i]
                     
-            if self.end == 0:
-                self.setTarget(self.newGoal)
-                break
+                    i +=1
+                    if i == self.links:
+                        self.setTarget(self.newGoal)
+                        self.newGoalFlag = False
+                    
 

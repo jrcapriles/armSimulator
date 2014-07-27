@@ -7,10 +7,10 @@ Created on Tue May 20 00:33:16 2014
 
 from armSimulator import *
 
-sim =  armSimulator(600,600,2)
+sim =  armSimulator(800,800,3)
 
-sim.setMaxF(None) #([10,10,10,10,0])#,2.5,0])
+sim.setMaxF(None) 
 
-sim.runSimulation("Rest",[-pi/2,-pi/2])
+sim.runSimulation("Rest",[-pi/2,-pi/2, pi])
 
       
