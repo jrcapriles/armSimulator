@@ -8,7 +8,7 @@ Created on Fri May  2 01:17:09 2014
 import pygame, Buttons
 from pygame.locals import *
 import ode
-from math import atan2
+from math import atan2, acos
 from numpy import *
 from Point import *
 import matplotlib.pyplot as plt
@@ -185,8 +185,7 @@ class armSimulator( object ):
 
             # Try to keep the specified framerate    
             self.clk.tick(self.fps)
-
-
+            
     def drawBackLines(self):    
         #Draw the back lines of the screen
         pygame.draw.line(self.srf, (0,0,0), self.world2screen(0,-self.lenght/2), self.world2screen(0,self.lenght/2), 1)    
@@ -232,9 +231,10 @@ class armSimulator( object ):
             self.j[i].setParam(ode.ParamHiStop,5.0) 
             self.j[i].MaxForce = 10
         
-        
+    #def invKinematics(self)
+    # TODO
+    
     def setNewGoal(self):
-        
         self.go = (0,0)
         self.newGoal = zeros(self.links)
         i = 0
@@ -247,7 +247,8 @@ class armSimulator( object ):
             # Draw the current circle in red and erase previous
             pygame.draw.circle(self.srf, (255,255,255), (self.white_circle[0],self.white_circle[1]), 130, 1)             
             pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 130, 1) 
-                
+            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 10, 1) 
+                        
             pygame.display.flip()
             events = pygame.event.get()
             
@@ -278,5 +279,3 @@ class armSimulator( object ):
                     if i == self.links:
                         self.setTarget(self.newGoal)
                         self.newGoalFlag = False
-                    
-
