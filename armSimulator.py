@@ -83,6 +83,9 @@ class armSimulator( object ):
     def world2screen(self,x,y):
         return int(self.width/2 + 128*x), int(self.lenght/2 - 128*y)
         
+    def screen2world(self,x,y):
+        return float((x - self.width/2)/128), float((-y + self.lenght/2)/128)
+        
     def surf(self, x,y):
         return (pow(x-pi/2,2) + pow(0.9*pi*y,2) - pow(pi/2,2))
 
@@ -105,7 +108,12 @@ class armSimulator( object ):
                 if e.type==QUIT:
                     self.loopFlag=False
                 if e.type==KEYDOWN:
-                    self.loopFlag=False
+                    if e.type==KEYDOWN:
+                        if e.key == K_g:
+                            print "New Goals: please click the new goal over the red circle"
+                            self.setNewGoal()
+                    else:
+                        self.loopFlag=False
                 elif e.type == MOUSEBUTTONDOWN:
                     if self.goal_button.pressed(pygame.mouse.get_pos()):
                         print "New Goals: please click the new goal over the red circle"
@@ -234,6 +242,9 @@ class armSimulator( object ):
     #def invKinematics(self)
     # TODO
     
+    def clean_cos(self,cos_angle):
+        return min(1,max(cos_angle,-1))
+    
     def setNewGoal(self):
         self.go = (0,0)
         self.newGoal = zeros(self.links)
@@ -243,6 +254,7 @@ class armSimulator( object ):
         self.white_circle = (self.width/2,self.lenght/2)
         self.newGoalFlag =True
         
+
         while self.newGoalFlag:
             # Draw the current circle in red and erase previous
             pygame.draw.circle(self.srf, (255,255,255), (self.white_circle[0],self.white_circle[1]), 130, 1)             
@@ -264,17 +276,20 @@ class armSimulator( object ):
     
                     self.white_circle = self.red_circle
                     self.red_circle = self.go
-                    
-                    xd = self.red_circle[0] - self.white_circle[0]                    
-                    yd = self.red_circle[1] - self.white_circle[1]
-                    
+                
                     if i==0:
-                        self.newGoal[i] = atan2(xd,yd)
+                        x01 = self.red_circle[0] - self.white_circle[0]                    
+                        y01 = self.red_circle[1] - self.white_circle[1]
+                        self.newGoal[i] = atan2(x01,y01)
+                        print self.newGoal[i]
+                    elif i==1:
+                        x,y = self.screen2world(self.red_circle[0],self.red_circle[1])
+                        print x,y
+                        self.newGoal[i] = sign(x)* acos(self.clean_cos((pow(x,2)+pow(y,2)-pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])))
+                        print self.newGoal[i]
                     else:
-                        self.newGoal[i] = sum(self.newGoal) - atan2(xd,yd)
-                        
-                    print self.newGoal[i]
-                    
+                        self.newGoal[i] = 0
+                  
                     i +=1
                     if i == self.links:
                         self.setTarget(self.newGoal)
