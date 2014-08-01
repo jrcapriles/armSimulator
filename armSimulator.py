@@ -82,6 +82,12 @@ class armSimulator( object ):
     
     def world2screen(self,x,y):
         return int(self.width/2 + 128*x), int(self.lenght/2 - 128*y)
+    
+    def world2screenX(self,x):
+        return int(self.width/2 + 128*x)
+    
+    def world2screenY(self,y):
+        return int(self.lenght/2 - 128*y)
         
     def screen2world(self,x,y):
         return float((x - self.width/2)/128), float((-y + self.lenght/2)/128)
@@ -93,7 +99,6 @@ class armSimulator( object ):
         return -y -(2*self.a/sqrt(pow(self.a,2)-1))*arctan(sqrt((self.a-1)/(self.a+1))*tan(y/2)) 
 
     def runSimulation(self, case, targets):
-
                 
         self.createIC() 
         self.createArm(case)
@@ -239,8 +244,14 @@ class armSimulator( object ):
             self.j[i].setParam(ode.ParamHiStop,5.0) 
             self.j[i].MaxForce = 10
         
-    #def invKinematics(self)
-    # TODO
+    def IK(self, x_des, y_des):
+        cos2= (pow(x_des,2) + pow(y_des,2) - pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])
+        c2 = self.clean_cos(cos2)
+        theta2 = acos(c2)
+        sin2 = sin(theta2)
+        theta1 = ((-self.L[0,1]*sin2*x_des)+(self.L[0,0]+(self.L[0,1]*c2))*y_des)/((self.L[0,1]*sin2*y_des)+(self.L[0,0]+(self.L[0,1]*c2))*x_des)
+        return theta1, theta2
+    
     
     def clean_cos(self,cos_angle):
         return min(1,max(cos_angle,-1))
@@ -273,20 +284,27 @@ class armSimulator( object ):
                     self.newGoalFlag = False
                 if e.type == MOUSEBUTTONDOWN:
                     self.go = pygame.mouse.get_pos()
-    
                     self.white_circle = self.red_circle
                     self.red_circle = self.go
-                
+                    
                     if i==0:
                         x01 = self.red_circle[0] - self.white_circle[0]                    
                         y01 = self.red_circle[1] - self.white_circle[1]
                         self.newGoal[i] = atan2(x01,y01)
-                        print self.newGoal[i]
-                    elif i==1:
-                        x,y = self.screen2world(self.red_circle[0],self.red_circle[1])
-                        print x,y
-                        self.newGoal[i] = sign(x)* acos(self.clean_cos((pow(x,2)+pow(y,2)-pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])))
-                        print self.newGoal[i]
+                        self.red_circle = self.world2screenX(self.L[0,0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0,0]*cos(self.newGoal[i]))
+#                    elif i==1:
+#                        rx,ry = self.screen2world(self.red_circle[0],self.red_circle[1])
+#                        wx,wy = self.screen2world(self.white_circle[0],self.white_circle[1])
+#                        cos2 = (pow(rx,2)+pow(ry,2) - pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])
+#                        cos2 = self.clean_cos(cos2)
+#                        
+#                        
+#                        ang1, ang2 = self.IK(rx,ry)
+#                        self.newGoal[i] = ang2  
+#                                                
+#                        self.red_circle = self.world2screenX(self.L[0,0]*sin(self.newGoal[i])+self.L[0,1]*sin(self.newGoal[i-1]+self.newGoal[i])),self.world2screenY(-self.L[0,0]*cos(self.newGoal[i])+self.L[0,1]*cos(self.newGoal[i-1]+self.newGoal[i]))
+#
+#                        print self.newGoal[i]
                     else:
                         self.newGoal[i] = 0
                   
