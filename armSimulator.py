@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 class armSimulator( object ):
     def __init__( self, width, lenght, links):
         self.width, self.lenght, self.links = width, lenght, links
-        self.L = ones((1,self.links))
+        self.L = ones(self.links)
         # Initialize pygame
         pygame.init()
         # Open a display
@@ -163,11 +163,11 @@ class armSimulator( object ):
                 errThetaDot.append(self.getTarget(i)+thetaDot[i])
                 
                 if i == 0: #Kinematics
-                    xd.append(-self.L[0,0]*sin(-self.getTarget(0)))
-                    yd.append(-self.L[0,0]*cos(-self.getTarget(0)))
+                    xd.append(-self.L[0]*sin(-self.getTarget(0)))
+                    yd.append(-self.L[0]*cos(-self.getTarget(0)))
                 else:
-                    xd.append(xd[i-1]+self.L[0,i]*sin(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
-                    yd.append(yd[i-1]-self.L[0,i]*cos(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
+                    xd.append(xd[i-1]+self.L[i]*sin(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
+                    yd.append(yd[i-1]-self.L[i]*cos(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
                 
                 T.append(-errTheta[i])
 
@@ -291,7 +291,7 @@ class armSimulator( object ):
                         x01 = self.red_circle[0] - self.white_circle[0]                    
                         y01 = self.red_circle[1] - self.white_circle[1]
                         self.newGoal[i] = atan2(x01,y01)
-                        self.red_circle = self.world2screenX(self.L[0,0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0,0]*cos(self.newGoal[i]))
+                        self.red_circle = self.world2screenX(self.L[0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0]*cos(self.newGoal[i]))
 #                    elif i==1:
 #                        rx,ry = self.screen2world(self.red_circle[0],self.red_circle[1])
 #                        wx,wy = self.screen2world(self.white_circle[0],self.white_circle[1])
