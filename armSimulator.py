@@ -116,6 +116,7 @@ class armSimulator( object ):
         self.clk = pygame.time.Clock()
 
         while self.loopFlag:
+            
             events = pygame.event.get()
             for e in events:
                 if e.type==QUIT:
@@ -177,8 +178,11 @@ class armSimulator( object ):
                     #yd.append(-self.L[0]*cos(-self.newGoal[0]))
                     
                 else:
-                    xd.append(xd[i-1]+self.L[i]*sin(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
-                    yd.append(yd[i-1]-self.L[i]*cos(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
+                    xd.append(xd[i-1]+self.L[i]*sin(-sum(self.thetad)))#self.getTargetRange(0,i))+self.getTarget(i)))
+                    yd.append(yd[i-1]-self.L[i]*cos(-sum(self.thetad)))#self.getTargetRange(0,i))+self.getTarget(i)))
+                
+                
+
                 
                 T.append(-errTheta[i])
 
@@ -187,6 +191,11 @@ class armSimulator( object ):
                 self.j[i].setParam(ode.ParamFMax, self.getMaxF(i))
             
            #Drawings
+           
+            #xx,yy = self.FK(self.thetad)           
+            #pygame.draw.circle(self.srf, (0,128,0), self.world2screen(xx,yy), 10, 0)   #(Targets) 
+           
+           
             for i in range(0,self.links):
                 pygame.draw.circle(self.srf, (55,0,200), self.world2screen(x[i],y[i]), 10, 0)     #(Motors)
                 pygame.draw.circle(self.srf, (55,0,100), self.world2screen(xd[i],yd[i]), 10, 0)   #(Targets) 
@@ -257,7 +266,7 @@ class armSimulator( object ):
     def FK(self,thetas):
         x_e=self.L[0]*sin(thetas[0])+self.L[1]*sin(sum(thetas))
         y_e=self.L[0]*cos(thetas[0])+self.L[1]*cos(sum(thetas))
-        return x_e, y_e
+        return x_e, -y_e
     
     def IK(self, x, y):
         #inverse kinematics
@@ -266,9 +275,7 @@ class armSimulator( object ):
         print "New Angles",ang1b, ang2b
         return  (ang1b, -ang2b)
                 
-
-    
-    
+  
     def clean_cos(self,cos_angle):
         return min(1,max(cos_angle,-1))
     
