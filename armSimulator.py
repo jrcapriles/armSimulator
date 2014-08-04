@@ -8,7 +8,7 @@ Created on Fri May  2 01:17:09 2014
 import pygame, Buttons
 from pygame.locals import *
 import ode
-from math import atan2, acos
+from math import atan2, acos, asin
 from numpy import *
 from Point import *
 import matplotlib.pyplot as plt
@@ -52,6 +52,7 @@ class armSimulator( object ):
         
     def setTarget(self,target):
         self.thetad = target
+        self.newGoal = target
         
     def getTarget(self, i):
         return self.thetad[i]
@@ -89,9 +90,16 @@ class armSimulator( object ):
     def world2screenY(self,y):
         return int(self.lenght/2 - 128*y)
         
-    def screen2world(self,x,y):
-        return float((x - self.width/2)/128), float((-y + self.lenght/2)/128)
+    def screen2worldX(self,x):
+        return (float(x - self.width/2)/128)
         
+    def screen2worldY(self,y):
+        return (float(-y + self.lenght/2)/128)
+    
+    def screen2world(self,x,y):
+        return (float(x - self.width/2)/128), (float(-y + self.lenght/2)/128)
+    
+    
     def surf(self, x,y):
         return (pow(x-pi/2,2) + pow(0.9*pi*y,2) - pow(pi/2,2))
 
@@ -99,7 +107,7 @@ class armSimulator( object ):
         return -y -(2*self.a/sqrt(pow(self.a,2)-1))*arctan(sqrt((self.a-1)/(self.a+1))*tan(y/2)) 
 
     def runSimulation(self, case, targets):
-                
+        
         self.createIC() 
         self.createArm(case)
         self.setTarget(targets)
@@ -165,6 +173,9 @@ class armSimulator( object ):
                 if i == 0: #Kinematics
                     xd.append(-self.L[0]*sin(-self.getTarget(0)))
                     yd.append(-self.L[0]*cos(-self.getTarget(0)))
+                    #xd.append(-self.L[0]*sin(-self.newGoal[0]))
+                    #yd.append(-self.L[0]*cos(-self.newGoal[0]))
+                    
                 else:
                     xd.append(xd[i-1]+self.L[i]*sin(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
                     yd.append(yd[i-1]-self.L[i]*cos(-sum(self.getTargetRange(0,i))+self.getTarget(i)))
@@ -185,7 +196,6 @@ class armSimulator( object ):
                     pygame.draw.circle(self.srf, (255,0,0), self.world2screen(self.IC[i].getPointX(),self.IC[i].getPointY()), 5, 0) #(origin)
                 else:
                     pygame.draw.line(self.srf, (55,0,200), self.world2screen(x[i-1],y[i-1]), self.world2screen(x[i],y[i]), 2)
-
 
             self.drawBackLines()
             
@@ -244,13 +254,19 @@ class armSimulator( object ):
             self.j[i].setParam(ode.ParamHiStop,5.0) 
             self.j[i].MaxForce = 10
         
-    def IK(self, x_des, y_des):
-        cos2= (pow(x_des,2) + pow(y_des,2) - pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])
-        c2 = self.clean_cos(cos2)
-        theta2 = acos(c2)
-        sin2 = sin(theta2)
-        theta1 = ((-self.L[0,1]*sin2*x_des)+(self.L[0,0]+(self.L[0,1]*c2))*y_des)/((self.L[0,1]*sin2*y_des)+(self.L[0,0]+(self.L[0,1]*c2))*x_des)
-        return theta1, theta2
+    def FK(self,thetas):
+        x_e=self.L[0]*sin(thetas[0])+self.L[1]*sin(sum(thetas))
+        y_e=self.L[0]*cos(thetas[0])+self.L[1]*cos(sum(thetas))
+        return x_e, y_e
+    
+    def IK(self, x, y):
+        #inverse kinematics
+        ang2b = acos(self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1])))
+        ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
+        print "New Angles",ang1b, ang2b
+        return  (ang1b, -ang2b)
+                
+
     
     
     def clean_cos(self,cos_angle):
@@ -268,8 +284,7 @@ class armSimulator( object ):
 
         while self.newGoalFlag:
             # Draw the current circle in red and erase previous
-            pygame.draw.circle(self.srf, (255,255,255), (self.white_circle[0],self.white_circle[1]), 130, 1)             
-            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 130, 1) 
+            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 130*self.links, 1) 
             pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 10, 1) 
                         
             pygame.display.flip()
@@ -283,15 +298,19 @@ class armSimulator( object ):
                     self.loopFlag=False
                     self.newGoalFlag = False
                 if e.type == MOUSEBUTTONDOWN:
-                    self.go = pygame.mouse.get_pos()
+                    desired = pygame.mouse.get_pos()
+                    print self.screen2worldX(desired[0]), self.screen2worldY(desired[1])
                     self.white_circle = self.red_circle
-                    self.red_circle = self.go
-                    
-                    if i==0:
-                        x01 = self.red_circle[0] - self.white_circle[0]                    
-                        y01 = self.red_circle[1] - self.white_circle[1]
-                        self.newGoal[i] = atan2(x01,y01)
-                        self.red_circle = self.world2screenX(self.L[0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0]*cos(self.newGoal[i]))
+                    self.red_circle = desired
+                    self.newGoal = self.IK(self.screen2worldX(desired[0]), self.screen2worldY(desired[1]) )                   
+                    self.setTarget(self.newGoal)
+                    self.newGoalFlag = False
+                        
+                    #if i==0:
+                    #    x01 = self.red_circle[0] - self.white_circle[0]                    
+                    #    y01 = self.red_circle[1] - self.white_circle[1]
+                    #    self.newGoal[i] = atan2(x01,y01)
+                    #    self.red_circle = self.world2screenX(self.L[0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0]*cos(self.newGoal[i]))
 #                    elif i==1:
 #                        rx,ry = self.screen2world(self.red_circle[0],self.red_circle[1])
 #                        wx,wy = self.screen2world(self.white_circle[0],self.white_circle[1])
@@ -305,10 +324,10 @@ class armSimulator( object ):
 #                        self.red_circle = self.world2screenX(self.L[0,0]*sin(self.newGoal[i])+self.L[0,1]*sin(self.newGoal[i-1]+self.newGoal[i])),self.world2screenY(-self.L[0,0]*cos(self.newGoal[i])+self.L[0,1]*cos(self.newGoal[i-1]+self.newGoal[i]))
 #
 #                        print self.newGoal[i]
-                    else:
-                        self.newGoal[i] = 0
+                    #else:
+                    #    self.newGoal[i] = 0
                   
-                    i +=1
-                    if i == self.links:
-                        self.setTarget(self.newGoal)
-                        self.newGoalFlag = False
+                    #i +=1
+                    #if i == self.links:
+                    #    self.setTarget(self.newGoal)
+                    #    self.newGoalFlag = False

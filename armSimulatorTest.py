@@ -7,7 +7,7 @@ Created on Tue May 20 00:33:16 2014
 
 from armSimulator import *
 
-sim =  armSimulator(800,800,3)
+sim =  armSimulator(800,800,2)
 
 sim.setMaxF(None) 
 
