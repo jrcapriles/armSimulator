@@ -174,31 +174,22 @@ class armSimulator( object ):
                 if i == 0: #Kinematics
                     xd.append(-self.L[0]*sin(-self.getTarget(0)))
                     yd.append(-self.L[0]*cos(-self.getTarget(0)))
-                    #xd.append(-self.L[0]*sin(-self.newGoal[0]))
-                    #yd.append(-self.L[0]*cos(-self.newGoal[0]))
                     
                 else:
-                    xd.append(xd[i-1]+self.L[i]*sin(-sum(self.thetad)))#self.getTargetRange(0,i))+self.getTarget(i)))
-                    yd.append(yd[i-1]-self.L[i]*cos(-sum(self.thetad)))#self.getTargetRange(0,i))+self.getTarget(i)))
+                    xd.append(xd[i-1]+self.L[i]*sin(-sum(self.thetad)))
+                    yd.append(yd[i-1]-self.L[i]*cos(-sum(self.thetad)))
                 
-                
-
                 
                 T.append(-errTheta[i])
 
                 #Set servo values
                 self.j[i].setParam(ode.ParamVel, T[i])
                 self.j[i].setParam(ode.ParamFMax, self.getMaxF(i))
-            
-           #Drawings
-           
-            #xx,yy = self.FK(self.thetad)           
-            #pygame.draw.circle(self.srf, (0,128,0), self.world2screen(xx,yy), 10, 0)   #(Targets) 
-           
+                       
            
             for i in range(0,self.links):
                 pygame.draw.circle(self.srf, (55,0,200), self.world2screen(x[i],y[i]), 10, 0)     #(Motors)
-                pygame.draw.circle(self.srf, (55,0,100), self.world2screen(xd[i],yd[i]), 10, 0)   #(Targets) 
+                #pygame.draw.circle(self.srf, (55,0,100), self.world2screen(xd[i],yd[i]), 10, 0)   #(Targets) 
                 
                 if i==0:
                     pygame.draw.line(self.srf, (55,0,200), self.world2screen(self.IC[0].getPointX(),self.IC[0].getPointY()), self.world2screen(x[i],y[i]), 2)
