@@ -18,6 +18,7 @@ class armSimulator( object ):
     def __init__( self, width, lenght, links):
         self.width, self.lenght, self.links = width, lenght, links
         self.L = ones(self.links)
+        self.desired = None
         # Initialize pygame
         pygame.init()
         # Open a display
@@ -53,7 +54,7 @@ class armSimulator( object ):
     def setTarget(self,target):
         self.thetad = target
         self.newGoal = target
-        
+    
     def getTarget(self, i):
         return self.thetad[i]
         
@@ -185,7 +186,9 @@ class armSimulator( object ):
                 #Set servo values
                 self.j[i].setParam(ode.ParamVel, T[i])
                 self.j[i].setParam(ode.ParamFMax, self.getMaxF(i))
-                       
+
+            if self.desired is not None:
+                pygame.draw.circle(self.srf, (200,45,10), (self.desired[0],self.desired[1]), 12, 0)   #(Targets) 
            
             for i in range(0,self.links):
                 pygame.draw.circle(self.srf, (55,0,200), self.world2screen(x[i],y[i]), 10, 0)     #(Motors)
@@ -296,36 +299,10 @@ class armSimulator( object ):
                     self.loopFlag=False
                     self.newGoalFlag = False
                 if e.type == MOUSEBUTTONDOWN:
-                    desired = pygame.mouse.get_pos()
-                    print self.screen2worldX(desired[0]), self.screen2worldY(desired[1])
+                    self.desired = pygame.mouse.get_pos()
+                    print self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1])
                     self.white_circle = self.red_circle
-                    self.red_circle = desired
-                    self.newGoal = self.IK(self.screen2worldX(desired[0]), self.screen2worldY(desired[1]) )                   
+                    self.red_circle = self.desired
+                    self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
                     self.setTarget(self.newGoal)
                     self.newGoalFlag = False
-                        
-                    #if i==0:
-                    #    x01 = self.red_circle[0] - self.white_circle[0]                    
-                    #    y01 = self.red_circle[1] - self.white_circle[1]
-                    #    self.newGoal[i] = atan2(x01,y01)
-                    #    self.red_circle = self.world2screenX(self.L[0]*sin(self.newGoal[i])),self.world2screenY(-self.L[0]*cos(self.newGoal[i]))
-#                    elif i==1:
-#                        rx,ry = self.screen2world(self.red_circle[0],self.red_circle[1])
-#                        wx,wy = self.screen2world(self.white_circle[0],self.white_circle[1])
-#                        cos2 = (pow(rx,2)+pow(ry,2) - pow(self.L[0,0],2) - pow(self.L[0,1],2))/(2*self.L[0,0]*self.L[0,1])
-#                        cos2 = self.clean_cos(cos2)
-#                        
-#                        
-#                        ang1, ang2 = self.IK(rx,ry)
-#                        self.newGoal[i] = ang2  
-#                                                
-#                        self.red_circle = self.world2screenX(self.L[0,0]*sin(self.newGoal[i])+self.L[0,1]*sin(self.newGoal[i-1]+self.newGoal[i])),self.world2screenY(-self.L[0,0]*cos(self.newGoal[i])+self.L[0,1]*cos(self.newGoal[i-1]+self.newGoal[i]))
-#
-#                        print self.newGoal[i]
-                    #else:
-                    #    self.newGoal[i] = 0
-                  
-                    #i +=1
-                    #if i == self.links:
-                    #    self.setTarget(self.newGoal)
-                    #    self.newGoalFlag = False
