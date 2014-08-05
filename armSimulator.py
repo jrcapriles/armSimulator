@@ -181,7 +181,7 @@ class armSimulator( object ):
                     xd.append(xd[i-1]+self.L[i]*sin(-sum(self.thetad)))
                     yd.append(yd[i-1]-self.L[i]*cos(-sum(self.thetad)))
                 
-                
+                print "theta ", i, theta[i]
                 T.append(-errTheta[i])
 
                 #Set servo values
