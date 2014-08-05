@@ -153,8 +153,6 @@ class armSimulator( object ):
             errThetaDot = []            
             T = []
             
-            #self.setTarget(-0.8*pi*ones((1,self.links)))
-            
             for i in range(0,self.links):
                 x1,y1,z1 = self.body[i].getPosition()
                 x.append(x1)
@@ -164,9 +162,12 @@ class armSimulator( object ):
                 vx.append(vx1)
                 vy.append(vy1)
                 vz.append(vz1)
-                theta.append(self.j[i].getAngle()) 
+                theta.append(self.j[i].getAngle())
+                
                 #thetad.append(-0.5*pi)
                 errTheta.append(theta[i]- self.getTarget(i))
+                
+                print "theta ", i, self.j[i].getAngle()
 
                 thetaDot.append(sum(vz))
                 #thetaDotd.append(0.0)
@@ -187,12 +188,12 @@ class armSimulator( object ):
                 self.j[i].setParam(ode.ParamVel, T[i])
                 self.j[i].setParam(ode.ParamFMax, self.getMaxF(i))
 
-            if self.desired is not None:
-                pygame.draw.circle(self.srf, (200,45,10), (self.desired[0],self.desired[1]), 12, 0)   #(Targets) 
-           
+            if self.desired is not None: #(Targets) 
+                pygame.draw.circle(self.srf, (200,45,10), (self.desired[0],self.desired[1]), 12, 0)   
+                pygame.draw.circle(self.srf, (255,255,255), (self.desired[0],self.desired[1]), 10, 0) 
+                
             for i in range(0,self.links):
                 pygame.draw.circle(self.srf, (55,0,200), self.world2screen(x[i],y[i]), 10, 0)     #(Motors)
-                #pygame.draw.circle(self.srf, (55,0,100), self.world2screen(xd[i],yd[i]), 10, 0)   #(Targets) 
                 
                 if i==0:
                     pygame.draw.line(self.srf, (55,0,200), self.world2screen(self.IC[0].getPointX(),self.IC[0].getPointY()), self.world2screen(x[i],y[i]), 2)
@@ -277,7 +278,6 @@ class armSimulator( object ):
         self.go = (0,0)
         self.newGoal = zeros(self.links)
         i = 0
-    
         self.red_circle = (self.width/2,self.lenght/2)
         self.white_circle = (self.width/2,self.lenght/2)
         self.newGoalFlag =True

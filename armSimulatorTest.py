@@ -10,6 +10,7 @@ from armSimulator import *
 sim =  armSimulator(800,800,2)
 
 sim.setMaxF(None) 
+#sim.setMaxF(3*ones(2)) 
 
 sim.runSimulation("Rest",[-pi/2,-pi/2, pi])
 
