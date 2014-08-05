@@ -31,7 +31,7 @@ class armSimulator( object ):
         self.g= -9.81
         self.maxF = 20*ones((1,links))
         self.thetad = zeros((1,links)) 
-        
+        self.switch_counter = 0
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.switch_button = Buttons.Button(self.srf, color = (200,0,0), x = 60, y = 10, length =  50, height = 25, width = 0, text = "Switch", text_color = (255,255,255), font_size = 20, fade_on = False)
 
@@ -275,6 +275,9 @@ class armSimulator( object ):
         #abajo es ang1b,-ang2b
         #arriba es (pi -ang1b, ang2b)
   
+    def is_odd(self, num):
+        return num & 0x1
+    
     def clean_cos(self,cos_angle):
         return min(1,max(cos_angle,-1))
     
@@ -285,7 +288,7 @@ class armSimulator( object ):
         self.red_circle = (self.width/2,self.lenght/2)
         self.white_circle = (self.width/2,self.lenght/2)
         self.newGoalFlag =True
-        
+        self.switch_counter = 0
 
         while self.newGoalFlag:
             # Draw the current circle in red and erase previous
@@ -313,6 +316,11 @@ class armSimulator( object ):
 
 
     def switchSide(self):
-        self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]),True)                   
+        if self.is_odd(self.switch_counter):
+            self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]))                   
+        else:
+            self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]),True)                   
+        #self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]),True)                   
         self.setTarget(self.newGoal)
+        self.switch_counter +=1
                     
