@@ -31,7 +31,9 @@ class armSimulator( object ):
         self.g= -9.81
         self.maxF = 20*ones((1,links))
         self.thetad = zeros((1,links)) 
+        
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
+        self.switch_button = Buttons.Button(self.srf, color = (200,0,0), x = 60, y = 10, length =  50, height = 25, width = 0, text = "Switch", text_color = (255,255,255), font_size = 20, fade_on = False)
 
     def createIC(self):
         rest = [] 
@@ -133,6 +135,10 @@ class armSimulator( object ):
                     if self.goal_button.pressed(pygame.mouse.get_pos()):
                         print "New Goals: please click the new goal over the red circle"
                         self.setNewGoal()
+                    if self.switch_button.pressed(pygame.mouse.get_pos()):
+                        print "Switching side"
+                        self.switchSide()
+
 
 
             # Clear the screen
@@ -163,14 +169,8 @@ class armSimulator( object ):
                 vy.append(vy1)
                 vz.append(vz1)
                 theta.append(self.j[i].getAngle())
-                
-                #thetad.append(-0.5*pi)
                 errTheta.append(theta[i]- self.getTarget(i))
-                
-                print "theta ", i, self.j[i].getAngle()
-
                 thetaDot.append(sum(vz))
-                #thetaDotd.append(0.0)
                 errThetaDot.append(self.getTarget(i)+thetaDot[i])
                 
                 if i == 0: #Kinematics
@@ -204,7 +204,8 @@ class armSimulator( object ):
             self.drawBackLines()
             
             self.goal_button.update() #create_button(self.srf, (200,0,0), 10, 10, 50, 25, 0, "Goal", (255,255,255))
-        
+            self.switch_button.update()
+            
             pygame.display.flip()
 
             # Next simulation step
@@ -263,13 +264,16 @@ class armSimulator( object ):
         y_e=self.L[0]*cos(thetas[0])+self.L[1]*cos(sum(thetas))
         return x_e, -y_e
     
-    def IK(self, x, y):
+    def IK(self, x, y,switch = None):
         #inverse kinematics
         ang2b = acos(self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1])))
+        if switch is not None:
+            ang2b = -ang2b
         ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
         print "New Angles",ang1b, ang2b
         return  (ang1b, -ang2b)
-                
+        #abajo es ang1b,-ang2b
+        #arriba es (pi -ang1b, ang2b)
   
     def clean_cos(self,cos_angle):
         return min(1,max(cos_angle,-1))
@@ -306,3 +310,9 @@ class armSimulator( object ):
                     self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
                     self.setTarget(self.newGoal)
                     self.newGoalFlag = False
+
+
+    def switchSide(self):
+        self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]),True)                   
+        self.setTarget(self.newGoal)
+                    
