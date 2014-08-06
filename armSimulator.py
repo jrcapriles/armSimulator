@@ -125,10 +125,9 @@ class armSimulator( object ):
                 if e.type==QUIT:
                     self.loopFlag=False
                 if e.type==KEYDOWN:
-                    if e.type==KEYDOWN:
-                        if e.key == K_g:
-                            print "New Goals: please click the new goal over the red circle"
-                            self.setNewGoal()
+                    if e.key == K_g:
+                        print "New Goals: please click the new goal over the red circle"
+                        self.setNewGoal()
                     else:
                         self.loopFlag=False
                 elif e.type == MOUSEBUTTONDOWN:
