@@ -13,6 +13,10 @@ from numpy import *
 from Point import *
 import matplotlib.pyplot as plt
 
+from sympy import solve,symbols, Eq
+from sympy import sin as nsin
+from sympy import cos as ncos
+
 
 class armSimulator( object ):
     def __init__( self, width, lenght, links):
@@ -21,9 +25,10 @@ class armSimulator( object ):
         self.desired = None
         # Initialize pygame
         pygame.init()
+        
         # Open a display
         self.srf = pygame.display.set_mode((self.width,self.lenght))
-        pygame.display.set_caption(str(links) + "-link pendulum")
+        pygame.display.set_caption(str(links) + "-Link Arm")
         self.fps = 50
         self.dt = 1.0/self.fps
         self.loopFlag = True
@@ -34,6 +39,7 @@ class armSimulator( object ):
         self.switch_counter = 0
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.switch_button = Buttons.Button(self.srf, color = (200,0,0), x = 60, y = 10, length =  50, height = 25, width = 0, text = "Switch", text_color = (255,255,255), font_size = 20, fade_on = False)
+        self.follow_button = Buttons.Button(self.srf, color = (200,0,0), x = 110, y = 10, length =  50, height = 25, width = 0, text = "Follow", text_color = (255,255,255), font_size = 20, fade_on = False)
 
     def createIC(self):
         rest = [] 
@@ -117,27 +123,53 @@ class armSimulator( object ):
         
         # Simulation loop.
         self.clk = pygame.time.Clock()
+        self.follow = False
 
         while self.loopFlag:
             
             events = pygame.event.get()
             for e in events:
+                
                 if e.type==QUIT:
                     self.loopFlag=False
+
                 if e.type==KEYDOWN:
                     if e.key == K_g:
                         print "New Goals: please click the new goal over the red circle"
                         self.setNewGoal()
+
+                    elif e.key == K_f:
+                        self.follow = not self.follow
+                        if self.follow:
+                            self.follow_button.color = (100,0,0)
+                        else:
+                            self.follow_button.color = (200,0,0)
+
                     else:
                         self.loopFlag=False
+
                 elif e.type == MOUSEBUTTONDOWN:
                     if self.goal_button.pressed(pygame.mouse.get_pos()):
                         print "New Goals: please click the new goal over the red circle"
                         self.setNewGoal()
-                    if self.switch_button.pressed(pygame.mouse.get_pos()):
+
+                    elif self.switch_button.pressed(pygame.mouse.get_pos()):
                         print "Switching side"
                         self.switchSide()
 
+                    elif self.follow_button.pressed(pygame.mouse.get_pos()):
+                        self.follow = not self.follow
+                        if self.follow:
+                            self.follow_button.color = (100,0,0)
+                        else:
+                            self.follow_button.color = (200,0,0)
+                        
+                if self.follow:
+                    if e.type == MOUSEMOTION:
+                        self.desired = pygame.mouse.get_pos()
+                        print self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1])
+                        self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
+                        self.setTarget(self.newGoal)
 
 
             # Clear the screen
@@ -159,6 +191,7 @@ class armSimulator( object ):
             T = []
             
             for i in range(0,self.links):
+                
                 x1,y1,z1 = self.body[i].getPosition()
                 x.append(x1)
                 y.append(y1)
@@ -180,7 +213,7 @@ class armSimulator( object ):
                     xd.append(xd[i-1]+self.L[i]*sin(-sum(self.thetad)))
                     yd.append(yd[i-1]-self.L[i]*cos(-sum(self.thetad)))
                 
-                print "theta ", i, theta[i]
+                #print "theta ", i, theta[i]
                 T.append(-errTheta[i])
 
                 #Set servo values
@@ -204,6 +237,7 @@ class armSimulator( object ):
             
             self.goal_button.update() #create_button(self.srf, (200,0,0), 10, 10, 50, 25, 0, "Goal", (255,255,255))
             self.switch_button.update()
+            self.follow_button.update()
             
             pygame.display.flip()
 
@@ -264,15 +298,28 @@ class armSimulator( object ):
         return x_e, -y_e
     
     def IK(self, x, y,switch = None):
+        
+#        z, t = symbols('z t')
+        #solve([Eq(z + 5*t, 2), Eq(-3*z + 6*t, 15)], [z, t])
+#        print solve([Eq(nsin(z)+nsin(z+t)-x),Eq(ncos(z)+ncos(z+t)-y)],[z, t])
+        
         #inverse kinematics
-        ang2b = acos(self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1])))
-        if switch is not None:
-            ang2b = -ang2b
-        ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
-        print "New Angles",ang1b, ang2b
-        return  (ang1b, -ang2b)
-        #abajo es ang1b,-ang2b
-        #arriba es (pi -ang1b, ang2b)
+        if self.links == 2:        
+            ang2b = acos(self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1])))
+            if switch is not None:
+                ang2b = -ang2b
+            ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
+            print "New Angles",ang1b, ang2b
+            return  (ang1b, -ang2b)
+#        else:
+#            ang1 = atan2(y,x)+pi/2
+#            c3 = self.clean_cos((x**2+y**3-self.L[0]**2-self.L[1]**2-self.L[2]**2)/(2*self.L[1]*self.L[2]))
+#            s3 = self.clean_cos(sqrt(1-c3**2))
+#            ang3 = atan2(s3,c3)+pi/4
+#            ang2 = atan2(-self.L[0],sqrt(x**2+y**2))-atan2(self.L[2]*s3,self.L[1]+self.L[2]*c3)
+#            print "New Angles",ang1, ang2, ang3
+#            return (ang1,ang2, ang3)
+        
   
     def is_odd(self, num):
         return num & 0x1
@@ -295,6 +342,7 @@ class armSimulator( object ):
             pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 10, 1) 
                         
             pygame.display.flip()
+            
             events = pygame.event.get()
             
             for e in events:
@@ -312,6 +360,10 @@ class armSimulator( object ):
                     self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
                     self.setTarget(self.newGoal)
                     self.newGoalFlag = False
+        
+        self.goal_button.color = (200,0,0)
+  
+                    
 
 
     def switchSide(self):
