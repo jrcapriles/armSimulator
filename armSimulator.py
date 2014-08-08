@@ -203,7 +203,18 @@ class armSimulator( object ):
                 vy.append(vy1)
                 vz.append(vz1)
                 theta.append(self.j[i].getAngle())
-                errTheta.append(theta[i]- self.getTarget(i))
+                
+                #Compute error  (normalized)
+                if (theta[i]- self.getTarget(i)) > pi:
+                    err = theta[i] - self.getTarget(i) - 2*pi
+                elif (theta[i]- self.getTarget(i)) < -pi:
+                    err = theta[i] - self.getTarget(i) + 2*pi
+                else:
+                    err = theta[i] - self.getTarget(i)
+                    
+                errTheta.append(err) #theta[i]- self.getTarget(i))
+                if i == 0:
+                    print errTheta[0]
                 thetaDot.append(sum(vz))
                 errThetaDot.append(self.getTarget(i)+thetaDot[i])
                 
