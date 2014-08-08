@@ -8,6 +8,7 @@ Created on Fri May  2 01:17:09 2014
 import pygame, Buttons
 from pygame.locals import *
 import ode
+import random
 from math import atan2, acos, asin
 from numpy import *
 from Point import *
@@ -38,15 +39,20 @@ class armSimulator( object ):
         self.thetad = zeros((1,links)) 
         self.switch_counter = 0
         
+        #TODO create trasnformation matrix (n=2,3,4...)
+        self.T = zeros(shape=(3,3))
+        
         #Buttons
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.switch_button = Buttons.Button(self.srf, color = (200,0,0), x = 60, y = 10, length =  50, height = 25, width = 0, text = "Switch", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.follow_button = Buttons.Button(self.srf, color = (200,0,0), x = 110, y = 10, length =  50, height = 25, width = 0, text = "Follow", text_color = (255,255,255), font_size = 20, fade_on = False)
+        self.noise_button = Buttons.Button(self.srf, color = (200,0,0), x = 160, y = 10, length =  50, height = 25, width = 0, text = "Noise", text_color = (255,255,255), font_size = 20, fade_on = False)
         
         #Button Dictionary
         self.buttons = {0 : self.goal_button,
                         1 : self.switch_button,
-                        2 : self.follow_button}
+                        2 : self.follow_button,
+                        3 : self.noise_button}
                         
     def createIC(self):
         rest = [] 
@@ -130,7 +136,9 @@ class armSimulator( object ):
         # Simulation loop.
         self.clk = pygame.time.Clock()
         self.follow = False
+        self.noise = False
 
+        
         while self.loopFlag:
             
             events = pygame.event.get()
@@ -153,6 +161,13 @@ class armSimulator( object ):
                     elif e.key == K_s:
                         print "Switching side"
                         self.switchSide()
+
+                    elif e.key == K_n:
+                        self.noise = not self.noise
+                        if self.noise:
+                            self.updateBottons(3,(100,0,0))
+                        else:
+                            self.updateBottons(3,(200,0,0))
                     else:
                         self.loopFlag=False
 
@@ -171,6 +186,13 @@ class armSimulator( object ):
                             self.updateBottons(2,(100,0,0))
                         else:
                             self.updateBottons(2,(200,0,0))
+                            
+                    elif self.noise_button.pressed(pygame.mouse.get_pos()):
+                        self.noise = not self.follow
+                        if self.noise:
+                            self.updateBottons(3,(100,0,0))
+                        else:
+                            self.updateBottons(3,(200,0,0))
                         
                 if self.follow:
                     if e.type == MOUSEMOTION:
@@ -178,10 +200,13 @@ class armSimulator( object ):
                         print self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1])
                         self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
                         self.setTarget(self.newGoal)
-
-
+                        
             # Clear the screen
             self.srf.fill((255,255,255))
+
+            
+            if self.follow:
+                pygame.draw.circle(self.srf, (255,0,0), (self.world2screen(0,0)), 130*self.links, 1) 
 
             x = []
             xd = []
@@ -201,6 +226,11 @@ class armSimulator( object ):
             for i in range(0,self.links):
                 
                 x1,y1,z1 = self.body[i].getPosition()
+                
+                if self.noise:
+                    x1 += random.uniform(-0.01, 0.01)
+                    y1 += random.uniform(-0.01, 0.01)
+                
                 x.append(x1)
                 y.append(y1)
                 z.append(z1)
@@ -263,12 +293,15 @@ class armSimulator( object ):
             # Try to keep the specified framerate    
             self.clk.tick(self.fps)
             
+
+            
     def updateBottons(self,i=None,color = None):
         #Function to update the buttons defined at the button dictionary.
         if i is None and color is None:
             self.goal_button.update()
             self.switch_button.update()
             self.follow_button.update()
+            self.noise_button.update()
             return True
         elif color is None:
             self.buttons[i].update()
@@ -327,11 +360,6 @@ class armSimulator( object ):
         return x_e, -y_e
     
     def IK(self, x, y,switch = None):
-        
-#        z, t = symbols('z t')
-        #solve([Eq(z + 5*t, 2), Eq(-3*z + 6*t, 15)], [z, t])
-#        print solve([Eq(nsin(z)+nsin(z+t)-x),Eq(ncos(z)+ncos(z+t)-y)],[z, t])
-        
         #inverse kinematics
         if self.links == 2:        
             ang2b = acos(self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1])))
@@ -340,14 +368,19 @@ class armSimulator( object ):
             ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
             #print "New Angles",ang1b, ang2b
             return  (ang1b, -ang2b)
-#        else:
-#            ang1 = atan2(y,x)+pi/2
-#            c3 = self.clean_cos((x**2+y**3-self.L[0]**2-self.L[1]**2-self.L[2]**2)/(2*self.L[1]*self.L[2]))
-#            s3 = self.clean_cos(sqrt(1-c3**2))
-#            ang3 = atan2(s3,c3)+pi/4
-#            ang2 = atan2(-self.L[0],sqrt(x**2+y**2))-atan2(self.L[2]*s3,self.L[1]+self.L[2]*c3)
-#            print "New Angles",ang1, ang2, ang3
-#            return (ang1,ang2, ang3)
+        
+#        elif self.links == 3:
+#            c2 = self.clean_cos((x**2+y**2-self.L[0]**2-self.L[1]**2)/(2*self.L[0]*self.L[1]))
+#            s2 = sqrt(1-c2**2)
+#            ang2 = atan2(s2,c2)
+#            k1 = self.L[0]+self.L[1]*c2
+#            k2 = self.L[1]*s2
+#            ang1 = atan2(y,x)-atan2(k2,k1) + pi/2            
+#            sphi = (y-self.L[0]*sin(ang1)-self.L[1]*sin(ang1+ang2))/self.L[2]
+#            cphi = (y-self.L[0]*cos(ang1)-self.L[1]*cos(ang1+ang2))/self.L[2]
+#            ang3 = atan2(sphi,cphi) - ang1 - ang2
+#            return (ang1, ang2, ang3)
+
         
   
     def is_odd(self, num):
@@ -367,9 +400,7 @@ class armSimulator( object ):
 
         while self.newGoalFlag:
             # Draw the current circle in red and erase previous
-            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 130*self.links, 1) 
-            pygame.draw.circle(self.srf, (255,0,0), (self.red_circle[0],self.red_circle[1]), 10, 1) 
-                        
+            pygame.draw.circle(self.srf, (255,0,0), (self.world2screen(0,0)), 130*self.links, 1) 
             pygame.display.flip()
             
             events = pygame.event.get()
