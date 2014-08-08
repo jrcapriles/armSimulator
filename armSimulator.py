@@ -37,10 +37,17 @@ class armSimulator( object ):
         self.maxF = 20*ones((1,links))
         self.thetad = zeros((1,links)) 
         self.switch_counter = 0
+        
+        #Buttons
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.switch_button = Buttons.Button(self.srf, color = (200,0,0), x = 60, y = 10, length =  50, height = 25, width = 0, text = "Switch", text_color = (255,255,255), font_size = 20, fade_on = False)
         self.follow_button = Buttons.Button(self.srf, color = (200,0,0), x = 110, y = 10, length =  50, height = 25, width = 0, text = "Follow", text_color = (255,255,255), font_size = 20, fade_on = False)
-
+        
+        #Button Dictionary
+        self.buttons = {0 : self.goal_button,
+                        1 : self.switch_button,
+                        2 : self.follow_button}
+                        
     def createIC(self):
         rest = [] 
         left = []
@@ -108,7 +115,6 @@ class armSimulator( object ):
     def screen2world(self,x,y):
         return (float(x - self.width/2)/128), (float(-y + self.lenght/2)/128)
     
-    
     def surf(self, x,y):
         return (pow(x-pi/2,2) + pow(0.9*pi*y,2) - pow(pi/2,2))
 
@@ -141,9 +147,9 @@ class armSimulator( object ):
                     elif e.key == K_f:
                         self.follow = not self.follow
                         if self.follow:
-                            self.follow_button.color = (100,0,0)
+                            self.updateBottons(2,(100,0,0))
                         else:
-                            self.follow_button.color = (200,0,0)
+                            self.updateBottons(2,(200,0,0))
                     elif e.key == K_s:
                         print "Switching side"
                         self.switchSide()
@@ -162,9 +168,9 @@ class armSimulator( object ):
                     elif self.follow_button.pressed(pygame.mouse.get_pos()):
                         self.follow = not self.follow
                         if self.follow:
-                            self.follow_button.color = (100,0,0)
+                            self.updateBottons(2,(100,0,0))
                         else:
-                            self.follow_button.color = (200,0,0)
+                            self.updateBottons(2,(200,0,0))
                         
                 if self.follow:
                     if e.type == MOUSEMOTION:
@@ -213,8 +219,8 @@ class armSimulator( object ):
                     err = theta[i] - self.getTarget(i)
                     
                 errTheta.append(err) #theta[i]- self.getTarget(i))
-                if i == 0:
-                    print errTheta[0]
+                #if i == 0:
+                #    print errTheta[0]
                 thetaDot.append(sum(vz))
                 errThetaDot.append(self.getTarget(i)+thetaDot[i])
                 
@@ -241,16 +247,13 @@ class armSimulator( object ):
                 pygame.draw.circle(self.srf, (55,0,200), self.world2screen(x[i],y[i]), 10, 0)     #(Motors)
                 
                 if i==0:
-                    pygame.draw.line(self.srf, (55,0,200), self.world2screen(self.IC[0].getPointX(),self.IC[0].getPointY()), self.world2screen(x[i],y[i]), 2)
+                    pygame.draw.line(self.srf, (55,0,200), self.world2screen(self.IC[0].getPointX(),self.IC[0].getPointY()), self.world2screen(x[i],y[i]), 10)
                     pygame.draw.circle(self.srf, (255,0,0), self.world2screen(self.IC[i].getPointX(),self.IC[i].getPointY()), 5, 0) #(origin)
                 else:
-                    pygame.draw.line(self.srf, (55,0,200), self.world2screen(x[i-1],y[i-1]), self.world2screen(x[i],y[i]), 2)
+                    pygame.draw.line(self.srf, (55,0,200), self.world2screen(x[i-1],y[i-1]), self.world2screen(x[i],y[i]), 10)
 
             self.drawBackLines()
-            
-            self.goal_button.update() #create_button(self.srf, (200,0,0), 10, 10, 50, 25, 0, "Goal", (255,255,255))
-            self.switch_button.update()
-            self.follow_button.update()
+            self.updateBottons()
             
             pygame.display.flip()
 
@@ -260,6 +263,19 @@ class armSimulator( object ):
             # Try to keep the specified framerate    
             self.clk.tick(self.fps)
             
+    def updateBottons(self,i=None,color = None):
+        #Function to update the buttons defined at the button dictionary.
+        if i is None and color is None:
+            self.goal_button.update()
+            self.switch_button.update()
+            self.follow_button.update()
+            return True
+        elif color is None:
+            self.buttons[i].update()
+        else:
+            self.buttons[i].color = color
+            self.buttons[i].update()
+
     def drawBackLines(self):    
         #Draw the back lines of the screen
         pygame.draw.line(self.srf, (0,0,0), self.world2screen(0,-self.lenght/2), self.world2screen(0,self.lenght/2), 1)    
@@ -322,7 +338,7 @@ class armSimulator( object ):
             if switch is not None:
                 ang2b = -ang2b
             ang1b = atan2(y,x) - atan2(self.L[1]*sin(ang2b),(self.L[0]+self.L[1]*cos(ang2b))) +pi/2
-            print "New Angles",ang1b, ang2b
+            #print "New Angles",ang1b, ang2b
             return  (ang1b, -ang2b)
 #        else:
 #            ang1 = atan2(y,x)+pi/2
@@ -374,10 +390,11 @@ class armSimulator( object ):
                     self.setTarget(self.newGoal)
                     self.newGoalFlag = False
         
-        self.goal_button.color = (200,0,0)
-  
-                    
+            self.updateBottons(0,(100,0,0)) #0 for goal
 
+        #After the while
+        self.updateBottons(0,(200,0,0))
+        
 
     def switchSide(self):
         if self.is_odd(self.switch_counter):
