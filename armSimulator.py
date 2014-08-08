@@ -144,7 +144,9 @@ class armSimulator( object ):
                             self.follow_button.color = (100,0,0)
                         else:
                             self.follow_button.color = (200,0,0)
-
+                    elif e.key == K_s:
+                        print "Switching side"
+                        self.switchSide()
                     else:
                         self.loopFlag=False
 
