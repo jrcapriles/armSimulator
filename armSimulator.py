@@ -178,9 +178,9 @@ class armSimulator( object ):
 
                     elif self.switch_button.pressed(pygame.mouse.get_pos()):
                         print "Switching side"
+                    elif self.follow_button.pressed(pygame.mouse.get_pos()):
                         self.switchSide()
 
-                    elif self.follow_button.pressed(pygame.mouse.get_pos()):
                         self.follow = not self.follow
                         if self.follow:
                             self.updateBottons(2,(100,0,0))
