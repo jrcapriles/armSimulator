@@ -381,12 +381,10 @@ class armSimulator( object ):
         Tend[0][3] = self.L[1]
         Tend[1][3] = self.L[1]
         
-        
         prod = self.T[0]*(self.T[1]*Tend)
         
-        
-        print sum(prod2[0])
-        print sum(prod2[1])
+       # print sum(prod2[0])
+       # print sum(prod2[1])
         
         x_e=self.L[0]*sin(thetas[0])+self.L[1]*sin(sum(thetas))
         y_e=self.L[0]*cos(thetas[0])+self.L[1]*cos(sum(thetas))
