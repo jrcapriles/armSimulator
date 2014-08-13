@@ -8,6 +8,8 @@ Created on Sat Jul 26 23:01:44 2014
 from armSimulator import Point
 import unittest
 import random
+from math import sqrt
+
 
 class PointTest(unittest.TestCase):
     
@@ -25,6 +27,16 @@ class PointTest(unittest.TestCase):
         
     def test_getPointZ(self):
         self.assertEqual(self.Point.getPointZ(),self.z)
+
+    def test_getPoint(self):
+        point = self.Point.getPoint()
+        self.assertEqual(point[0],self.x)
+        self.assertEqual(point[1],self.y)
+        self.assertEqual(point[2],self.z)
+        
+    def test_distFrom(self):        
+        d=self.Point.distFrom(0.0,0.0,0.0)
+        self.assertEqual(d,sqrt(self.x**2+self.y**2+self.z**2))
         
 
 if __name__ == '__main__':
