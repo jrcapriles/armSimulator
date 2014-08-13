@@ -5,35 +5,36 @@ Created on Fri May  2 01:17:09 2014
 @author: jrcapriles
 """
 
-import pygame, Buttons
-from pygame.locals import *
-import ode
-import random
+import pygame, ode, random, Buttons
 from math import atan2, acos, asin
-from numpy import *
-from Point import *
 import matplotlib.pyplot as plt
 
-from sympy import solve,symbols, Eq
-from sympy import sin as nsin
-from sympy import cos as ncos
+from pygame.locals import *
+from numpy import *
+from Point import *
+
+
+#from sympy import solve,symbols, Eq
+#from sympy import sin as nsin
+#from sympy import cos as ncos
 
 
 class armSimulator( object ):
     def __init__( self, width, lenght, links):
+       # Initialize pygame
+        pygame.init()
+
         self.width, self.lenght, self.links = width, lenght, links
         self.L = ones(self.links)
         self.desired = None
-        # Initialize pygame
-        pygame.init()
         
         # Open a display
         self.srf = pygame.display.set_mode((self.width,self.lenght))
         pygame.display.set_caption(str(links) + "-Link Arm")
+        #Parameters
         self.fps = 50
         self.dt = 1.0/self.fps
         self.loopFlag = True
-        #Parameters
         self.g= -9.81
         self.maxF = 20*ones((1,links))
         self.thetad = zeros((1,links)) 
