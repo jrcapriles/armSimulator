@@ -40,7 +40,9 @@ class armSimulator( object ):
         self.switch_counter = 0
         
         #TODO create trasnformation matrix (n=2,3,4...)
-        self.T = zeros(shape=(3,3))
+        self.T = []
+        for count in range(0,self.links):
+            self.T.append(zeros(shape=(4,4)))
         
         #Buttons
         self.goal_button = Buttons.Button(self.srf, color = (200,0,0), x = 10, y = 10, length =  50, height = 25, width = 0, text = "Goal", text_color = (255,255,255), font_size = 20, fade_on = False)
@@ -127,6 +129,56 @@ class armSimulator( object ):
     def phi(self, y):
         return -y -(2*self.a/sqrt(pow(self.a,2)-1))*arctan(sqrt((self.a-1)/(self.a+1))*tan(y/2)) 
 
+    def checkEvents(self):
+        #Get the list of events from Pygame         
+        events = pygame.event.get()
+        for e in events:
+            if e.type==QUIT:
+                self.loopFlag=False
+            elif e.type==KEYDOWN:
+                if e.key == K_g:
+                    print "New Goals: please click the new goal over the red circle"
+                    self.setNewGoal()
+                elif e.key == K_f:
+                    self.follow = not self.follow
+                    if self.follow:
+                        self.updateBottons(2,(100,0,0))
+                    else:
+                        self.updateBottons(2,(200,0,0))
+                elif e.key == K_s:
+                    print "Switching side"
+                    self.switchSide()
+                elif e.key == K_n:
+                    self.noise = not self.noise
+                    if self.noise:
+                        self.updateBottons(3,(100,0,0))
+                    else:
+                        self.updateBottons(3,(200,0,0))
+                else:
+                    self.loopFlag=False
+            elif e.type == MOUSEBUTTONDOWN:
+                if self.goal_button.pressed(pygame.mouse.get_pos()):
+                    print "New Goals: please click the new goal over the red circle"
+                    self.setNewGoal()
+                elif self.switch_button.pressed(pygame.mouse.get_pos()):
+                    print "Switching side"
+                    self.switchSide()
+                elif self.follow_button.pressed(pygame.mouse.get_pos()):
+                    self.follow = not self.follow
+                    if self.follow:
+                        self.updateBottons(2,(100,0,0))
+                    else:
+                        self.updateBottons(2,(200,0,0))
+                elif self.noise_button.pressed(pygame.mouse.get_pos()):
+                    self.noise = not self.follow
+                    if self.noise:
+                        self.updateBottons(3,(100,0,0))
+                    else:
+                        self.updateBottons(3,(200,0,0))
+                        
+                       
+
+
     def runSimulation(self, case, targets):
         
         self.createIC() 
@@ -140,66 +192,14 @@ class armSimulator( object ):
 
         
         while self.loopFlag:
+            # Check for events
+            self.checkEvents()     
             
-            events = pygame.event.get()
-            for e in events:
-                
-                if e.type==QUIT:
-                    self.loopFlag=False
-
-                if e.type==KEYDOWN:
-                    if e.key == K_g:
-                        print "New Goals: please click the new goal over the red circle"
-                        self.setNewGoal()
-
-                    elif e.key == K_f:
-                        self.follow = not self.follow
-                        if self.follow:
-                            self.updateBottons(2,(100,0,0))
-                        else:
-                            self.updateBottons(2,(200,0,0))
-                    elif e.key == K_s:
-                        print "Switching side"
-                        self.switchSide()
-
-                    elif e.key == K_n:
-                        self.noise = not self.noise
-                        if self.noise:
-                            self.updateBottons(3,(100,0,0))
-                        else:
-                            self.updateBottons(3,(200,0,0))
-                    else:
-                        self.loopFlag=False
-
-                elif e.type == MOUSEBUTTONDOWN:
-                    if self.goal_button.pressed(pygame.mouse.get_pos()):
-                        print "New Goals: please click the new goal over the red circle"
-                        self.setNewGoal()
-
-                    elif self.switch_button.pressed(pygame.mouse.get_pos()):
-                        print "Switching side"
-                        self.switchSide()
-
-                    elif self.follow_button.pressed(pygame.mouse.get_pos()):
-                        self.follow = not self.follow
-                        if self.follow:
-                            self.updateBottons(2,(100,0,0))
-                        else:
-                            self.updateBottons(2,(200,0,0))
-                            
-                    elif self.noise_button.pressed(pygame.mouse.get_pos()):
-                        self.noise = not self.follow
-                        if self.noise:
-                            self.updateBottons(3,(100,0,0))
-                        else:
-                            self.updateBottons(3,(200,0,0))
-                        
-                if self.follow:
-                    if e.type == MOUSEMOTION:
-                        self.desired = pygame.mouse.get_pos()
-                        print self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1])
-                        self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
-                        self.setTarget(self.newGoal)
+            if self.follow:
+                self.desired = pygame.mouse.get_pos()
+                print self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1])
+                self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
+                self.setTarget(self.newGoal)
                         
             # Clear the screen
             self.srf.fill((255,255,255))
@@ -352,11 +352,46 @@ class armSimulator( object ):
             self.j[i].setAxis( (0,0,1) )
             self.j[i].setParam(ode.ParamLoStop, -5.0) 
             self.j[i].setParam(ode.ParamHiStop,5.0) 
-            self.j[i].MaxForce = 10
+            self.j[i].MaxForce = 1
         
     def FK(self,thetas):
+        
+        self.T[0][0][0] = cos(thetas[0]) 
+        self.T[0][0][1] = -sin(thetas[0])
+        self.T[0][1][0] = sin(thetas[0])
+        self.T[0][1][1] = cos(thetas[0])
+        #self.T[1][0][3] = self.L[0]       
+        self.T[0][2][2] = 1 
+        self.T[0][3][3] = 1 
+        
+        self.T[1][0][0] = cos(thetas[1]) 
+        self.T[1][0][1] = -sin(thetas[1])
+        self.T[1][1][0] = sin(thetas[1])
+        self.T[1][1][1] = cos(thetas[1])
+        self.T[1][0][3] = self.L[0]
+        self.T[1][1][3] = self.L[0]
+        self.T[1][2][2] = 1 
+        self.T[1][3][3] = 1 
+        
+        Tend = zeros(shape=(4,4)) 
+        Tend[0][0] = 1
+        Tend[1][1] = 1
+        Tend[2][2] = 1
+        Tend[3][3] = 1
+        Tend[0][3] = self.L[1]
+        Tend[1][3] = self.L[1]
+        
+        
+        prod = self.T[0]*(self.T[1]*Tend)
+        
+        
+        print sum(prod2[0])
+        print sum(prod2[1])
+        
         x_e=self.L[0]*sin(thetas[0])+self.L[1]*sin(sum(thetas))
         y_e=self.L[0]*cos(thetas[0])+self.L[1]*cos(sum(thetas))
+        
+        print x_e, y_e
         return x_e, -y_e
     
     def IK(self, x, y,switch = None):
@@ -419,6 +454,9 @@ class armSimulator( object ):
                     self.red_circle = self.desired
                     self.newGoal = self.IK(self.screen2worldX(self.desired[0]), self.screen2worldY(self.desired[1]) )                   
                     self.setTarget(self.newGoal)
+                    
+                    self.FK(self.newGoal)
+
                     self.newGoalFlag = False
         
             self.updateBottons(0,(100,0,0)) #0 for goal
