@@ -7,7 +7,9 @@ Created on Sat Jul 26 23:01:44 2014
 
 import pygame
 from pygame.locals import *
+
 pygame.init()
+
 class Button:
     def __init__(self, surface, **kwargs):
         self.surface = surface
@@ -22,6 +24,7 @@ class Button:
         self.text_color = kwargs.get('text_color',(255,255,255) )        
         self.fade_on = kwargs.get('fade_on',False )
         self.font_size = kwargs.get('font_size', None)
+        self.show_pressed = kwargs.get('show_pressed', False)
         self.create_button(surface, self.color, self.border_color, self.x, self.y, self.length, self.height, self.width, self.text, self.text_color, self.font_size, self.fade_on)
         self.draw_button(surface, self.color, self.border_color, self.length, self.height, self.x, self.y, self.width,self.fade_on)           
     
@@ -67,7 +70,8 @@ class Button:
             if mouse[1] > self.rect.topleft[1]:
                 if mouse[0] < self.rect.bottomright[0]:
                     if mouse[1] < self.rect.bottomright[1]:
-                        print "The button was pressed!"
+                        if self.show_pressed:
+                            print "The button was pressed!"
                         return True
                     else: return False
                 else: return False
