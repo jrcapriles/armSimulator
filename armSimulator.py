@@ -14,11 +14,6 @@ from numpy import *
 from Point import *
 
 
-#from sympy import solve,symbols, Eq
-#from sympy import sin as nsin
-#from sympy import cos as ncos
-
-
 class armSimulator( object ):
     def __init__( self, width, lenght, links):
        # Initialize pygame
@@ -57,23 +52,36 @@ class armSimulator( object ):
                         2 : self.follow_button,
                         3 : self.noise_button}
                         
-    def createIC(self):
+    def createIC(self, values = None):
         rest = [] 
         left = []
         right = []
         up =[]
+        extra=[]
+        print values
+        
         #First loop to create all different combinations of IC
         for i in range(0,self.links+1):
             rest.append(Point(0,-i,0))
             left.append(Point(i,0,0))
             right.append(Point(-i,0,0))
             up.append(Point(0,i,0))
+            if values is not None:
+                extra.append(Point(0,values[i],0))
            
         #Create the dicionary
-        self.ICList = {"Rest":rest,
-                       "Left":left,
-                       "Right":right,
-                       "Up":up}
+        if values is None:
+            self.ICList = {"Rest":rest,
+                           "Left":left,
+                           "Right":right,
+                           "Up":up}
+        
+        else:
+            self.ICList = {"Rest":rest,
+                           "Left":left,
+                           "Right":right,
+                           "Up":up,
+                           "Extra":extra}
         
     def setTarget(self,target):
         self.thetad = target
@@ -104,7 +112,14 @@ class armSimulator( object ):
         return self.width
 
     def getLenght(self):
-            return self.leght
+        return self.lenght
+    
+    def getLinksLenght(self):
+        return self.L
+
+    def setLinksLenght(self, new_L):
+        self.L = new_L
+        return True
     
     def world2screen(self,x,y):
         return int(self.width/2 + 128*x), int(self.lenght/2 - 128*y)
@@ -180,9 +195,13 @@ class armSimulator( object ):
                        
 
 
-    def runSimulation(self, case, targets):
+    def runSimulation(self, case, targets,extra=None):
         
-        self.createIC() 
+        if extra is not None:
+            self.createIC(extra)
+        else:
+            self.createIC() 
+        
         self.createArm(case)
         self.setTarget(targets)
         
@@ -214,14 +233,16 @@ class armSimulator( object ):
             y = []
             yd = []
             z = []
+            
             vx = []
             vy = []
             vz = []
+
             theta = []
-            #thetad = []
             errTheta = []            
             thetaDot = []
             errThetaDot = []            
+
             T = []
             
             for i in range(0,self.links):
@@ -341,7 +362,6 @@ class armSimulator( object ):
             self.M[i].setSphere(2500, 0.025)
             self.body[i].setMass(self.M[i])
             self.body[i].setPosition(self.getIC(i+1))
-            
             self.j.append(ode.HingeJoint(self.world))
             if i==0:
                 self.j[i].attach(self.body[0], ode.environment)

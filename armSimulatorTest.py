@@ -10,9 +10,11 @@ from numpy import pi
 
 sim =  arm.armSimulator(800,800,2)
 
+#sim.setLinksLenght([1,0.5])
+
 sim.setMaxF(None) 
 #sim.setMaxF([10,0]) 
 
-sim.runSimulation("Rest",[-pi/2,-pi/2, pi])
+sim.runSimulation("Rest",[-pi/2,-pi/2, pi])#,[0,1,0.5])
 
        
